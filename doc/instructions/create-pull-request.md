@@ -3,10 +3,10 @@
 1. Look on a commit history between a base (if not mentioned otherwise, use **main**). You will need to run command like below 
 ```bash
 #  to get current branch, you will use it in step 5
-git branch
+git branch --show-current
 
-# Get most recent changes
-git fetch origin/<base branch>
+# Get most recent changes from base branch
+git fetch origin <base branch>
 
 # git log (add origin to base branch when comparing)
 git log origin/<base branch>..HEAD --oneline | cat
@@ -29,6 +29,9 @@ git log origin/<base branch>..HEAD --oneline | cat
 ```bash
 git push origin <current branch> --set-upstream
 
-gh pr create --title "<PR title>" --body "<PR description>" --base origin/<base branch> --head origin/<current branch>
+# Create a PR with a properly formatted, multi-line body using a here-document and --body-file -
+gh pr create --title "<PR title>" --body-file - --base <base branch> --head <current branch> <<EOF
+<PR description>
+EOF
 ```
 6. Show the PR to the user as a clickable URL so user can click it, as well as full URL for copying.
