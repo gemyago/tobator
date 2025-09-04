@@ -37,7 +37,7 @@ To add or remove a dependency:
 
 1.  `cd api`
 2.  `direnv allow` (may happen automatically, will also install dependencies)
-3.  `uvicorn api.main:app --reload --app-dir src`
+3.  `uvicorn api.main:app --app-dir src`
 
 ### How to run tests
 
