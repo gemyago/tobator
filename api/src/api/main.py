@@ -4,6 +4,8 @@ import structlog
 from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
 from fastapi import FastAPI, Request
 
+from api.middleware.logging import HTTPLogMiddleware
+
 from .logging_config import setup_logging
 
 # Determine environment: production if APP_ENV=production, else development
@@ -14,6 +16,8 @@ IS_PRODUCTION = APP_ENV == "production"
 setup_logging(is_json_logs=IS_PRODUCTION)
 
 app = FastAPI()
+
+app.add_middleware(HTTPLogMiddleware)
 
 # Add correlation ID middleware
 app.add_middleware(
