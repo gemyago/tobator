@@ -1,39 +1,34 @@
-import os
-
-import structlog
-from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
-from api.middleware.logging import HTTPLogMiddleware
+from api.handlers.openai import audio, chat_completions, embeddings, images, models
 
-from .logging_config import setup_logging
-
-# Determine environment: production if APP_ENV=production, else development
-APP_ENV = os.environ.get("APP_ENV", "development").lower()
-IS_PRODUCTION = APP_ENV == "production"
-
-# Configure logging before app instantiation
-setup_logging(is_json_logs=IS_PRODUCTION)
-
-app = FastAPI()
-
-app.add_middleware(HTTPLogMiddleware)
-
-# Add correlation ID middleware
-app.add_middleware(
-    CorrelationIdMiddleware,
-    header_name="X-Correlation-ID",  # Read from this header, or generate if missing
+app = FastAPI(
+    title="OpenAI-Compatible API Proxy",
+    description="API gateway proxying OpenAI-compatible endpoints.",
+    version="0.1.0",
 )
 
-logger = structlog.get_logger()
 
-def helper_function():
-    # This function demonstrates that correlation_id is available in nested calls
-    logger.info("Helper function log", helper_correlation_id=correlation_id.get())
-
-@app.get("/")
+@app.get("/", tags=["Root"])
 async def root(request: Request):
-    logger.info("Root endpoint called", path=request.url.path)
-    logger.warning("This is a warning log", extra_data="something important")
-    helper_function()
-    return {"message": "Hello, world!", "correlation_id": correlation_id.get()}
+    """
+    Root endpoint for health check or welcome.
+    """
+    # Try to get correlation_id from request.state, then from header, else "N/A"
+    correlation_id = getattr(request.state, "correlation_id", None)
+    if correlation_id is None:
+        correlation_id = request.headers.get("X-Request-ID", "N/A")
+    return JSONResponse({
+        "message": "Hello, world!",
+        "correlation_id": correlation_id,
+    })
+
+
+# Register OpenAI endpoint routers
+app.include_router(chat_completions.router)
+app.include_router(embeddings.router)
+app.include_router(models.router)
+app.include_router(images.router)
+app.include_router(audio.router)
+
